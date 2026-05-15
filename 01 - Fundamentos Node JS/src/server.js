@@ -1,40 +1,36 @@
 import http from 'node:http';
+import { json } from './middlewares/json.js'; // Importação do novo middleware
 
-const PORT = 5000;
-const users = [{
-    id: 2, name: "Vampeta", email: "vampeta@gmail.com"
-}];
+const users = [];
 
-const server = http.createServer((req, res) => {
-    const { method, url } = req;
+const server = http.createServer(async (req, res) => {
+  const { method, url } = req;
 
+  // Executa o middleware para processar o corpo da requisição
+    await json(req, res);
+    
     if (method === 'GET' && url === '/') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('Olá Mundo');
-
-    } else if (method === 'GET' && url === '/users') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(users.length > 0 ? JSON.stringify(users) : 'Nenhum usuário encontrado'); 
-
-    } else if (method === 'POST' && url === '/users') {
-        users.push({ id: 1, name: 'John Doe', email: 'john.doe@example.com' });
-
-        if (users.length > 0) {
-            res.writeHead(201, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: 'Usuário criado' }));
-        } else {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: 'Nenhum usuário encontrado' }));
-        }
-        
-
-    } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Página não encontrada');
-
+      return res.end('Olá Mundo');
     }
+
+  if (method === 'GET' && url === '/users') {
+    return res.end(JSON.stringify(users));
+  }
+
+  if (method === 'POST' && url === '/users') {
+    // Agora o req.body já está disponível e tratado!
+    const { name, email } = req.body;
+
+    users.push({
+      id: 1,
+      name,
+      email,
+    });
+
+    return res.writeHead(201).end();
+  }
+
+  return res.writeHead(404).end();
 });
 
-console.log(`Servidor rodando na porta http://localhost:${PORT}`);
-
-server.listen(PORT);
+server.listen(5000);
